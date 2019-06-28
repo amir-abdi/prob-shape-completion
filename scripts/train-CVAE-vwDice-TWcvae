@@ -23,7 +23,7 @@ python3 src/main.py \
 --image_save_step=100 \
 --log_step=1 \
 --num_workers=6 \
---valid_epoch=6 \
+--valid_epoch=3 \
 --pickle_epoch=3 \
 --data_resolution=1  \
 --net_size=0.125 \
@@ -35,9 +35,6 @@ python3 src/main.py \
 --no_convs_per_block_fcomb=2 \
 --no_convs_fcomb=2 \
 --gaussian_variance=1600 \
+--num_targets=5 \
 --kl_gamma=0.1 \
---load_model_path=$RESULTS_PATH/pickle/model=cvae_model_alg=cvae_shape_postfix=train-probvnet-1mm-cvae-wdice-wtarget/G_0.pkl \
---load_optim_path=$RESULTS_PATH/pickle/model=cvae_model_alg=cvae_shape_postfix=train-probvnet-1mm-cvae-wdice-wtarget/G_optim_0.pkl \
---use_wandb=true \
---test=false \
 
