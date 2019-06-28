@@ -1205,3 +1205,9 @@ def random_remove(sample, cube_len, min_remove_width=10, max_remove_width=50,
         box = np.tile(np.expand_dims(box, axis=0), (others.shape[0], 1, 1, 1))
 
     return sample_kept, sample_removed, box, gauss, others, others_weight
+
+
+def inject_summary(summary_writer, tag, value, step):
+    import tensorflow as tf
+    summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
+    summary_writer.add_summary(summary, global_step=step)

@@ -97,7 +97,7 @@ class _G(nn.Module):
                            self.vnet.output_channels, self.num_classes,
                            self.no_convs_fcomb, {'w': 'orthogonal', 'b': 'normal'}).to(device)
 
-    def forward(self, patch, target=None, dice_latent=None, combine=False, prior_post_latent=None):
+    def forward(self, patch, target=None, combine=False, prior_post_latent=None):
         if target is not None:
             s0, s1 = target.size(0), target.size(1)
             target = target.view(s0 * s1, 1,
@@ -118,60 +118,18 @@ class _G(nn.Module):
 
             unet_features = self.vnet.forward(patch)
             reconstructed = self.reconstruct_mult(unet_features, prior_post_latent)
-            if not combine:
-                return reconstructed, loss_dist
-            else:
-                weights_normed = dice_latent / torch.sum(dice_latent, dim=1, keepdim=True)
-                cl = self.args.cube_len
-                weights_normed = repeat_cube(weights_normed, (cl, cl, cl))
-
-                reconstructed = reconstructed * weights_normed
-                reconstructed = reconstructed.sum(dim=1, keepdim=False)
-                return reconstructed, loss_dist
+            return reconstructed, loss_dist
         elif prior_post_latent is not None:
             unet_features = self.vnet.forward(patch)
             reconstructed = self.reconstruct_mult(unet_features, prior_post_latent)
-
             if not combine:
                 return reconstructed
             else:
                 reconstructed = reconstructed.mean(dim=1, keepdim=False)
                 return reconstructed
-        elif dice_latent is not None:
-            # todo: fix this
-            unet_features = self.vnet.forward(patch)
-            dice_latent = torch.unsqueeze(dice_latent, -1)
-
-            reconstructed = self.reconstruct_mult(unet_features, dice_latent)
-
-            if not combine:
-                return reconstructed
-            else:
-                weights_normed = dice_latent / torch.sum(dice_latent, dim=1, keepdim=True)
-                weights_normed = weights_normed.squeeze()
-                cl = self.args.cube_len
-                weights_normed = repeat_cube(weights_normed, (cl, cl, cl))
-                # print(weights_normed.size(), reconstructed.size())
-                reconstructed = reconstructed * weights_normed
-                reconstructed = reconstructed.sum(dim=1, keepdim=False)
-                return reconstructed
         else:
-            # eval
-            unet_features = self.vnet.forward(patch)
-            prior_dist = self.prior.forward(patch)
-
-            m = self.args.num_variations
-            gens = []
-            for recons_i in range(m):
-                generated_shape3d = self.reconstruct_single(use_latent_mean=False,
-                                                            sample_latent=False,
-                                                            latent_sample=prior_dist.rsample(),
-                                                            feature_map=unet_features)
-                gens.append(generated_shape3d)
-            gens = torch.cat(tuple(gens), dim=1)
-            gens = torch.mean(gens, dim=1)
-
-            return gens
+            raise NotImplementedError('In CVAE, during inference, the latent should have been sampled from the '
+                                      'prior distribution before calling inference.')
 
     def reconstruct_mult(self, feature_map, latent_sample):
 

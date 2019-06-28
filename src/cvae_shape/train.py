@@ -3,6 +3,7 @@ import numpy as np
 import torch
 from torch import optim
 from torch.optim import lr_scheduler
+from torch import nn
 
 from common.utils import make_hyparam_string_gen, save_new_pickle, read_pickles_args, save_voxel_plot
 from common.utils import var_or_cuda, get_data_loaders
@@ -15,15 +16,10 @@ def train(args):
     log_param = make_hyparam_string_gen(args)
 
     # for using tensorboard
+    summary_writer = None
     if args.use_tensorboard:
         import tensorflow as tf
         summary_writer = tf.summary.FileWriter(os.path.join(args.output_dir, args.tb_log_dir, log_param))
-
-        def inject_summary(summary_writer, tag, value, step):
-            summary = tf.Summary(value=[tf.Summary.Value(tag=tag, simple_value=value)])
-            summary_writer.add_summary(summary, global_step=step)
-
-        inject_summary = inject_summary
 
     # Prepare datasets
     dset_loaders_train, dset_loaders_valid = get_data_loaders(args.data_path, labels_path=None, args=args)
@@ -40,9 +36,10 @@ def train(args):
 
     G_solver = optim.Adam(net.parameters(), lr=args.g_lr, betas=args.beta, weight_decay=args.weight_decay)
 
+    # Initialize learning rate scheduler
+    G_scheduler = None
     if args.lrsh is not None:
-        # todo(amirabdi): different args are needed for different schedulers
-        G_scheduler = getattr(lr_scheduler, args.lrsh)(G_solver, gamma=args.lr_gamma_g)  # 0.7
+        G_scheduler = getattr(lr_scheduler, args.lrsh)(G_solver, gamma=args.lr_gamma_g)
 
     loss_fn = args.gen_g_loss[0]
     criterion_reconst = loss_function(loss_fn)
@@ -50,6 +47,7 @@ def train(args):
     # load saved models
     read_pickles_args(args, net, G_solver, net.vnet)
 
+    # Initialize wandb
     if args.use_wandb:
         import wandb
         wandb.watch(net)
@@ -88,10 +86,9 @@ def train(args):
                 gauss = var_or_cuda(gauss)
                 others = var_or_cuda(others)
                 others_weight = var_or_cuda(others_weight)
-
                 others_weight_norm = others_weight / torch.sum(others_weight, dim=1, keepdim=True)
 
-                generated_shape3d, kl_loss = net(shape_kept, dice_latent=others_weight, target=others)
+                generated_shape3d, kl_loss = net(shape_kept, target=others)
 
                 # TODO: not sure whether to multiply with *box before or after loss
                 if loss_fn == 'variational_dice':
@@ -123,9 +120,9 @@ def train(args):
             loss.backward()
 
             if args.grad_clip is not None:
-                torch.nn.utils.clip_grad_norm_(net.prior.parameters(), args.grad_clip)
-                torch.nn.utils.clip_grad_norm_(net.posterior.parameters(), args.grad_clip)
-                torch.nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
+                nn.utils.clip_grad_norm_(net.prior.parameters(), args.grad_clip)
+                nn.utils.clip_grad_norm_(net.posterior.parameters(), args.grad_clip)
+                nn.utils.clip_grad_norm_(net.parameters(), args.grad_clip)
 
             # if current batch_size doesn't fit in memory, accumulate over multiple samples
             if i % args.batch_size_acml == 0:
@@ -180,6 +177,7 @@ def train(args):
                     'lr': lr
                 }
                 if args.use_tensorboard:
+                    from common.utils import inject_summary
                     log_save_path = os.path.join(args.output_dir, args.tb_log_dir, log_param)
                     if not os.path.exists(log_save_path):
                         os.makedirs(log_save_path)
@@ -188,6 +186,7 @@ def train(args):
                     summary_writer.flush()
 
                 if args.use_wandb:
+                    import wandb
                     wandb.log(info)
 
                 print(
@@ -258,8 +257,10 @@ def train(args):
             valid_info = {"valid_dice": valid_dice}
             print('valid dice:{:.4}'.format(valid_dice))
             if args.use_wandb:
+                import wandb
                 wandb.log(valid_info)
             if args.use_tensorboard:
+                from common.utils import inject_summary
                 for tag, value in valid_info.items():
                     inject_summary(summary_writer, tag, value, str(iteration))
                 summary_writer.flush()
@@ -272,7 +273,5 @@ def train(args):
             except Exception as e:
                 print("fail lr scheduling", e)
 
-        if args.use_wandb:
-            wandb.log()
         epoch += 1
     print("[---- Training complete ----]")

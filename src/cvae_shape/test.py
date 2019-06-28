@@ -43,8 +43,8 @@ def test(args):
                 continue
 
             latent = var_or_cuda(torch.as_tensor(np.random.randn(shape_kept.size(0),
-                                                                 1,  # number of variations
-                                                                 args.z_size) * 0.0, dtype=torch.float))
+                                                                 args.num_targets,  # number of variations
+                                                                 args.z_size), dtype=torch.float))
 
             generated_shape3d = net(shape_kept, combine=True, prior_post_latent=latent).squeeze()
             generated_shape3d = generated_shape3d * box
