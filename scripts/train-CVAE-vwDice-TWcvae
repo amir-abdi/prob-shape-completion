@@ -1,0 +1,43 @@
+#!/bin/bash
+
+filename=$(basename $0)
+
+python3 src/main.py \
+--model_name=cvae_model \
+--postfix=${filename} \
+--alg_name=cvae_shape \
+--data_path="$DATASETS/mandible/train117" \
+--data_path_test="$DATASETS/mandible/test117/pkls" \
+--output_dir="$RESULTS_PATH" \
+--batch_size=2 \
+--batch_size_acml=1 \
+--gen_g_loss=variational_weighted_dice \
+--g_lr=0.011 \
+--lr_gamma_g=0.98 \
+--use_matplotlib=true \
+--use_plotly=false \
+--save_voxels=false \
+--save_by_iter=false \
+--random_remove=true \
+--num_epochs=10000000 \
+--image_save_step=100 \
+--log_step=1 \
+--num_workers=6 \
+--valid_epoch=6 \
+--pickle_epoch=3 \
+--data_resolution=1  \
+--net_size=0.125 \
+--cube_len=141 \
+--augment_trans_voxels=10 \
+--augment_rotate_degree=10 \
+--z_size=8 \
+--num_fcomb_filters=8 \
+--no_convs_per_block_fcomb=2 \
+--no_convs_fcomb=2 \
+--gaussian_variance=1600 \
+--kl_gamma=0.1 \
+--load_model_path=$RESULTS_PATH/pickle/model=cvae_model_alg=cvae_shape_postfix=train-probvnet-1mm-cvae-wdice-wtarget/G_0.pkl \
+--load_optim_path=$RESULTS_PATH/pickle/model=cvae_model_alg=cvae_shape_postfix=train-probvnet-1mm-cvae-wdice-wtarget/G_optim_0.pkl \
+--use_wandb=true \
+--test=false \
+

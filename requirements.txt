@@ -1,0 +1,8 @@
+numpy
+wandb
+matplotlib
+pillow
+torch
+torchvision
+scipy
+
