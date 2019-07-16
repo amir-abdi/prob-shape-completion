@@ -5,7 +5,7 @@ This repository accompanies the article expected to be published in
 the 22nd International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI 2019), 
 which will be held from October 13th to 17th, 2019, in Shenzhen, China.
 
-Please consider citing our manuscript if you enjoyed the implementation:
+Please consider citing the draft of the [paper on arxiv](https://arxiv.org/pdf/1906.11957.pdf) if you enjoyed the implementation:
 
     @misc{1906.11957,
     Author = {Amir H. Abdi and Mehran Pesteie and Eitan Prisman and Purang Abolmaesumi and Sidney Fels},
