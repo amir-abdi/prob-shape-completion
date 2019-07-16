@@ -5,4 +5,4 @@ pillow
 torch
 torchvision
 scipy
-
+PySide2
