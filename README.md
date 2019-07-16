@@ -14,11 +14,18 @@ Please consider citing our manuscript if you enjoyed the implementation:
     Eprint = {arXiv:1906.11957},
     }
 
-#### Train and Test Model
+### Download data
+To download the data and set the environment variable $DATASETS to where the data is 
+downloaded, run
+
+    source download-data.sh 
+
+
+### Train and Test Model
 This is a Python3 implementation. To train the conditional VAE model for shape completion with the default data 
 (mandible dataset), install the requirements by running
 
-    pip3 install -r requirements.txt
+    pip install -r requirements.txt
 
 And run the training script
     
@@ -29,6 +36,6 @@ To test the model, set the `--test=true` and set the
 `--load_model_path` flag to where the trained model is stored. 
 
 
-#### Sample Results
+### Sample Results
 
 ![Reconstructed Samples](./imgs/TestCases.png)
